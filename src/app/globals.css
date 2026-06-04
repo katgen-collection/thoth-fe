@@ -1,0 +1,335 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Thothai — design tokens (ported from the mockup)
+   Monochrome accent, glassmorphism, light/dark via [data-theme].
+   ============================================================ */
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  /* type — families supplied by next/font (see app/layout.tsx) */
+  --font-sans: var(--font-jakarta), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* radii */
+  --r-sm: 9px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+
+  /* accent — near-black in light */
+  --accent: oklch(0.27 0.006 270);
+  --accent-strong: oklch(0.16 0.006 270);
+  --accent-soft: oklch(0.45 0.01 270 / 0.1);
+  --accent-fg: oklch(0.99 0 0);
+
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* ---------------- LIGHT ---------------- */
+:root,
+[data-theme="light"] {
+  --bg-0: oklch(0.97 0.008 270);
+  --bg-1: oklch(0.985 0.006 270);
+
+  --text: oklch(0.22 0.02 270);
+  --text-muted: oklch(0.5 0.015 270);
+  --text-faint: oklch(0.64 0.012 270);
+
+  --glass: oklch(1 0 0 / 0.62);
+  --glass-strong: oklch(1 0 0 / 0.78);
+  --glass-hover: oklch(1 0 0 / 0.85);
+  --border: oklch(0.5 0.02 270 / 0.14);
+  --border-strong: oklch(0.4 0.02 270 / 0.2);
+  --hairline: oklch(1 0 0 / 0.6);
+
+  --shadow-sm: 0 1px 2px oklch(0.3 0.02 270 / 0.06), 0 2px 8px oklch(0.3 0.02 270 / 0.05);
+  --shadow-md: 0 4px 16px oklch(0.3 0.03 270 / 0.1), 0 1px 3px oklch(0.3 0.02 270 / 0.06);
+  --shadow-lg: 0 18px 48px oklch(0.25 0.03 270 / 0.16), 0 4px 12px oklch(0.25 0.02 270 / 0.08);
+
+  --user-bubble: oklch(0.96 0.012 270 / 0.85);
+  --code-bg: oklch(0.95 0.01 270 / 0.7);
+
+  --positive: oklch(0.6 0.13 150);
+  --warning: oklch(0.62 0.15 40);
+}
+
+/* ---------------- DARK ---------------- */
+[data-theme="dark"] {
+  --bg-0: oklch(0.18 0.018 270);
+  --bg-1: oklch(0.21 0.02 270);
+
+  --text: oklch(0.95 0.008 270);
+  --text-muted: oklch(0.72 0.015 270);
+  --text-faint: oklch(0.58 0.015 270);
+
+  --glass: oklch(0.28 0.02 270 / 0.55);
+  --glass-strong: oklch(0.3 0.022 270 / 0.72);
+  --glass-hover: oklch(0.34 0.024 270 / 0.8);
+  --border: oklch(0.85 0.02 270 / 0.12);
+  --border-strong: oklch(0.9 0.02 270 / 0.2);
+  --hairline: oklch(0.9 0.02 270 / 0.08);
+
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.3), 0 2px 8px oklch(0 0 0 / 0.25);
+  --shadow-md: 0 6px 20px oklch(0 0 0 / 0.4), 0 1px 3px oklch(0 0 0 / 0.3);
+  --shadow-lg: 0 22px 56px oklch(0 0 0 / 0.55), 0 4px 14px oklch(0 0 0 / 0.4);
+
+  --accent: oklch(0.96 0.003 270);
+  --accent-strong: oklch(1 0 0);
+  --accent-soft: oklch(0.8 0.012 270 / 0.13);
+  --accent-fg: oklch(0.19 0.02 270);
+
+  --user-bubble: oklch(0.34 0.02 270 / 0.5);
+  --code-bg: oklch(0.16 0.015 270 / 0.7);
+
+  --positive: oklch(0.72 0.14 150);
+  --warning: oklch(0.74 0.14 50);
+}
+
+/* ============================================================
+   Tailwind theme bridge — expose CSS vars as utility tokens so
+   classes like `bg-glass`, `text-muted`, `border-border` work.
+   ============================================================ */
+@theme inline {
+  --color-bg-0: var(--bg-0);
+  --color-bg-1: var(--bg-1);
+  --color-fg: var(--text);
+  --color-muted: var(--text-muted);
+  --color-faint: var(--text-faint);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-fg: var(--accent-fg);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-glass: var(--glass);
+  --color-glass-strong: var(--glass-strong);
+  --color-glass-hover: var(--glass-hover);
+  --color-code-bg: var(--code-bg);
+  --color-user-bubble: var(--user-bubble);
+  --color-positive: var(--positive);
+  --color-warning: var(--warning);
+
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --shadow-glass-sm: var(--shadow-sm);
+  --shadow-glass-md: var(--shadow-md);
+  --shadow-glass-lg: var(--shadow-lg);
+}
+
+/* ============================================================
+   base
+   ============================================================ */
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+body {
+  font-family: var(--font-sans);
+  color: var(--text);
+  background: var(--bg-0);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* kill transitions during a theme switch so var-derived backgrounds
+   re-resolve instantly */
+.no-transitions * {
+  transition: none !important;
+}
+
+/* ============================================================
+   glass / panel surfaces
+   ============================================================ */
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(22px) saturate(165%);
+  -webkit-backdrop-filter: blur(22px) saturate(165%);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md), inset 0 1px 0 var(--hairline);
+}
+.glass-strong {
+  background: var(--glass-strong);
+  backdrop-filter: blur(26px) saturate(170%);
+  -webkit-backdrop-filter: blur(26px) saturate(170%);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md), inset 0 1px 0 var(--hairline);
+}
+/* layered surface for cards inside a glass panel — no nested backdrop-filter */
+.panel {
+  background: var(--glass-strong);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 var(--hairline);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* ============================================================
+   scrollbars
+   ============================================================ */
+.scroll-area {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.scroll-area::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.scroll-area::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 99px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+.scroll-area::-webkit-scrollbar-thumb:hover {
+  background: var(--text-faint);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+}
+
+/* ============================================================
+   animations
+   ============================================================ */
+@keyframes rise {
+  from {
+    transform: translateY(9px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.rise {
+  animation: rise 0.42s var(--ease) both;
+}
+
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  background: var(--accent);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: blink 1s steps(1) infinite;
+  border-radius: 1px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+}
+.pulse-dot {
+  animation: pulse-dot 1.2s var(--ease) infinite;
+}
+
+/* ============================================================
+   markdown (assistant replies, interview prep)
+   ============================================================ */
+.md {
+  font-size: 14.5px;
+  line-height: 1.62;
+  color: var(--text);
+}
+.md > * + * {
+  margin-top: 10px;
+}
+.md h1,
+.md h2,
+.md h3 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-top: 18px;
+}
+.md h1 {
+  font-size: 19px;
+}
+.md h2 {
+  font-size: 17px;
+}
+.md h3 {
+  font-size: 15px;
+}
+.md strong {
+  font-weight: 700;
+}
+.md a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.md ul,
+.md ol {
+  padding-left: 20px;
+}
+.md li + li {
+  margin-top: 3px;
+}
+.md code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1px 5px;
+}
+.md pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  overflow-x: auto;
+}
+.md pre code {
+  background: none;
+  border: none;
+  padding: 0;
+}
