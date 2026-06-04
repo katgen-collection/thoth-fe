@@ -59,7 +59,7 @@ export function CvUploadDropzone() {
             : "Drop a PDF here, or click to browse"}
       </div>
       <div className="text-[12.5px] text-muted">
-        Thothai parses skills, experience &amp; education automatically · PDF only
+        ThothAI parses skills, experience &amp; education automatically · PDF only
       </div>
     </div>
   );

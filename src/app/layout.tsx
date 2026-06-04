@@ -18,7 +18,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Thothai — AI job-search assistant",
+  title: "ThothAI — AI job-search assistant",
   description:
     "Chat-first AI assistant for job search: live job search, CV analysis, cover letters, and an interview-prep tracker.",
 };

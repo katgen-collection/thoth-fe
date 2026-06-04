@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ============================================================
-   Thothai — design tokens (ported from the mockup)
+   ThothAI — design tokens (ported from the mockup)
    Monochrome accent, glassmorphism, light/dark via [data-theme].
    ============================================================ */
 
@@ -151,6 +151,28 @@ body {
   outline-offset: 2px;
 }
 
+/* ------------------------------------------------------------
+   interaction affordances — anything clickable gets a pointer,
+   anything disabled gets a blocked cursor. Catches the many raw
+   <button>/<a>/<label> elements that don't go through <Button>.
+   ------------------------------------------------------------ */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+summary,
+label[for],
+select:not(:disabled) {
+  cursor: pointer;
+}
+button:disabled,
+[role="button"][aria-disabled="true"],
+[aria-disabled="true"],
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+}
+
 /* kill transitions during a theme switch so var-derived backgrounds
    re-resolve instantly */
 .no-transitions * {
@@ -269,6 +291,66 @@ body {
 }
 .pulse-dot {
   animation: pulse-dot 1.2s var(--ease) infinite;
+}
+
+/* animated aurora field — used behind the login screen */
+@keyframes aurora-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(4%, -3%, 0) scale(1.08);
+  }
+  66% {
+    transform: translate3d(-3%, 4%, 0) scale(0.96);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+.aurora-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(64px);
+  opacity: 0.55;
+  will-change: transform;
+  animation: aurora-drift 18s var(--ease) infinite;
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+.float-slow {
+  animation: float-slow 5s var(--ease) infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* subtle generic hover lift for clickable cards */
+.lift {
+  transition: transform 0.18s var(--ease), background 0.18s var(--ease),
+    box-shadow 0.18s var(--ease);
+}
+.lift:hover {
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob,
+  .float-slow,
+  .rise {
+    animation: none !important;
+  }
 }
 
 /* ============================================================

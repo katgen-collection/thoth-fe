@@ -15,6 +15,7 @@ import {
 import type { ParsedToolResult } from "@/types/chat";
 import { JobCard } from "@/components/jobs/job-card";
 import { Button } from "@/components/ui/button";
+import { copyText } from "@/lib/clipboard";
 import { Markdown } from "./markdown";
 
 /** Circular score gauge (0–100). */
@@ -202,12 +203,12 @@ function CopyableText({
 }) {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
+    const ok = await copyText(text);
+    if (ok) {
       setCopied(true);
       toast.success("Copied to clipboard");
       setTimeout(() => setCopied(false), 1500);
-    } catch {
+    } else {
       toast.error("Couldn't copy");
     }
   };

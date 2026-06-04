@@ -155,7 +155,7 @@ export default function CvDetailPage({
           description={
             cv.status === "ready"
               ? "Run Analyze to extract structured data."
-              : "Thothai is extracting skills, experience, and education."
+              : "ThothAI is extracting skills, experience, and education."
           }
         />
       )}

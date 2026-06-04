@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { sendMessageRequest } from "@/lib/api/chat";
 import { readChatSse } from "@/lib/sse/parse";
+import { parseToolResult } from "@/lib/chat/render";
 import type { ChatSseEvent } from "@/types/sse";
 import type { AssistantBlock, ChatMessage } from "@/types/chat";
 
@@ -18,6 +19,11 @@ export interface UseChatStreamOptions {
   initialMessages?: ChatMessage[];
   /** Called the first time a message is sent in a brand-new conversation. */
   onConversationNeeded?: () => Promise<string>;
+  /**
+   * Fired right after a brand-new conversation is created (before any tokens
+   * stream), so the UI can swap to its permanent URL seamlessly.
+   */
+  onConversationCreated?: (id: string) => void;
   onError?: (message: string) => void;
 }
 
@@ -25,6 +31,7 @@ export function useChatStream({
   conversationId,
   initialMessages = [],
   onConversationNeeded,
+  onConversationCreated,
   onError,
 }: UseChatStreamOptions) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
@@ -99,6 +106,10 @@ export function useChatStream({
               tool.done = true;
               tool.progress = 100;
               tool.summary = event.summary;
+              // Render the rich result card immediately — no refetch needed.
+              if (event.result != null) {
+                tool.result = parseToolResult(event.tool, event.result);
+              }
             }
             return blocks;
           });
@@ -138,6 +149,7 @@ export function useChatStream({
         try {
           convId = await onConversationNeeded();
           convRef.current = convId;
+          onConversationCreated?.(convId);
         } catch {
           onError?.("Could not start a conversation");
           return;
@@ -184,7 +196,7 @@ export function useChatStream({
         abortRef.current = null;
       }
     },
-    [streaming, reduceEvent, updateLastBlocks, onConversationNeeded, onError],
+    [streaming, reduceEvent, updateLastBlocks, onConversationNeeded, onConversationCreated, onError],
   );
 
   const stop = useCallback(() => {

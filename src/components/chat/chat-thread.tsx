@@ -10,6 +10,7 @@ import {
   useCreateConversation,
   conversationKeys,
 } from "@/hooks/use-conversations";
+import { chatApi } from "@/lib/api/chat";
 import { useChatStore } from "@/stores/chat-store";
 import { messagesFromServer } from "@/lib/chat/render";
 import { LoadingState } from "@/components/ui/states";
@@ -44,9 +45,22 @@ export function ChatThread({ conversationId }: { conversationId: string | null }
     return created.id;
   }, [createConv]);
 
+  // The moment a brand-new conversation exists, surface it in the sidebar right
+  // away (it streams into the current view in place). We defer the URL swap to
+  // its permanent path until the stream finishes — navigating mid-stream would
+  // remount this component and abort the in-flight SSE.
+  const onConversationCreated = useCallback(
+    (id: string) => {
+      newIdRef.current = id;
+      qc.invalidateQueries({ queryKey: conversationKeys.all });
+    },
+    [qc],
+  );
+
   const { messages, setMessages, streaming, send, stop } = useChatStream({
     conversationId,
     onConversationNeeded,
+    onConversationCreated,
     onError: (m) => toast.error(m),
   });
 
@@ -54,6 +68,9 @@ export function ChatThread({ conversationId }: { conversationId: string | null }
   // turn is never clobbered when `streaming` flips back to false).
   useEffect(() => {
     if (!conversationId) {
+      // A new conversation may have been created mid-session (URL swapped via
+      // history.replaceState while the prop stays null) — don't wipe its thread.
+      if (newIdRef.current) return;
       seededFor.current = null;
       setMessages([]);
       return;
@@ -72,22 +89,34 @@ export function ChatThread({ conversationId }: { conversationId: string | null }
 
   const handleSend = useCallback(
     async (text: string) => {
-      const wasNew = !conversationId;
       await send(text);
 
-      if (wasNew && newIdRef.current) {
-        // Conversation now exists & is persisted — go to its permanent URL.
-        qc.invalidateQueries({ queryKey: conversationKeys.all });
-        router.replace(`/chat/${newIdRef.current}`);
-        return;
+      // Reconcile with the persisted conversation so tool rows render as the
+      // exact same rich cards (and the title settles). Live SSE already showed
+      // them, so this is a silent correctness pass — no manual reload needed.
+      const id = conversationId ?? newIdRef.current;
+      if (!id) return;
+      try {
+        const fresh = await qc.fetchQuery({
+          queryKey: conversationKeys.detail(id),
+          queryFn: () => chatApi.getConversation(id),
+        });
+        if (fresh) setMessages(messagesFromServer(fresh));
+        seededFor.current = id;
+      } catch {
+        /* keep the live-streamed view if the reconcile fetch fails */
       }
-
-      // Existing conversation: pull persisted rows so tool results become cards.
-      const fresh = await conv.refetch();
-      if (fresh.data) setMessages(messagesFromServer(fresh.data));
       qc.invalidateQueries({ queryKey: conversationKeys.all });
+
+      // New conversation: now that streaming is done, move to its permanent URL.
+      // The detail query is already cached above, so the remount re-seeds
+      // instantly with no flicker — and the route tree stays in sync with the
+      // URL (so "New chat" and refreshes behave correctly).
+      if (!conversationId && newIdRef.current) {
+        router.replace(`/chat/${newIdRef.current}`);
+      }
     },
-    [conversationId, send, conv, qc, router, setMessages],
+    [conversationId, send, qc, router, setMessages],
   );
 
   // Consume a prompt handed over from another surface (JobCard "Match CV", etc.)

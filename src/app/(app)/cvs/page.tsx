@@ -14,7 +14,7 @@ export default function CvLibraryPage() {
     <PageWrap>
       <PageHeader
         title="CV library"
-        description="Manage the CVs Thothai uses to match and tailor."
+        description="Manage the CVs ThothAI uses to match and tailor."
       />
       <CvUploadDropzone />
 
@@ -30,7 +30,7 @@ export default function CvLibraryPage() {
         <EmptyState
           icon={FileText}
           title="No CVs yet"
-          description="Upload a PDF above to get started — Thothai will parse it automatically."
+          description="Upload a PDF above to get started — ThothAI will parse it automatically."
         />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

@@ -19,7 +19,7 @@ function titleFor(pathname: string): string {
   const match = Object.keys(TITLES).find(
     (k) => pathname === k || pathname.startsWith(`${k}/`),
   );
-  return match ? TITLES[match] : "Thothai";
+  return match ? TITLES[match] : "ThothAI";
 }
 
 export function TopBar() {
@@ -42,7 +42,7 @@ export function TopBar() {
       </Button>
       <div className="min-w-0 flex-1">
         <div className="truncate text-[14.5px] font-bold">{titleFor(pathname)}</div>
-        <div className="text-[11.5px] text-faint">Thothai · job-search agent</div>
+        <div className="text-[11.5px] text-faint">ThothAI · job-search agent</div>
       </div>
       {isChat && <ModelSelector />}
       <Button

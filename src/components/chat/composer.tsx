@@ -73,7 +73,7 @@ export function Composer({ onSend, onStop, streaming, initialValue = "" }: Compo
         </div>
       </div>
       <p className="mt-2 text-center text-[11px] text-faint">
-        Thothai can search live job boards and analyze your CV. Verify details before applying.
+        ThothAI can search live job boards and analyze your CV. Verify details before applying.
       </p>
     </div>
   );

@@ -27,6 +27,7 @@ export interface SseToolResultEvent {
   type: "tool_result";
   tool: string;
   summary: string; // short human line
+  result?: unknown; // raw tool payload — rendered into a rich card live
 }
 
 export interface SseDoneEvent {

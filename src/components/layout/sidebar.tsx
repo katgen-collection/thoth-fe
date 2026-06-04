@@ -12,8 +12,9 @@ import {
   ChevronRight,
   type LucideIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, initials } from "@/lib/utils";
 import { useUiStore } from "@/stores/ui-store";
+import { useAuth } from "@/context/AuthContext";
 import { ConversationList } from "./conversation-list";
 
 const NAV: { href: string; label: string; icon: LucideIcon }[] = [
@@ -27,12 +28,15 @@ export function Sidebar() {
   const collapsed = useUiStore((s) => s.sidebarCollapsed);
   const pathname = usePathname();
   const router = useRouter();
+  const { user } = useAuth();
 
   return (
     <aside
       className={cn(
-        "glass flex shrink-0 flex-col overflow-hidden rounded-[var(--r-lg)] transition-[width,margin] duration-200",
-        collapsed ? "mr-0 w-0" : "mr-3 w-[274px]",
+        "flex shrink-0 flex-col overflow-hidden rounded-[var(--r-lg)] transition-[width,margin] duration-200",
+        // No `glass` (border/shadow) while collapsed, otherwise the 1px border
+        // renders as a thin sliver at w-0.
+        collapsed ? "mr-0 w-0 border-0 shadow-none" : "glass mr-3 w-[274px]",
       )}
     >
       <div className="flex h-full w-[274px] flex-col">
@@ -41,7 +45,7 @@ export function Sidebar() {
           <div className="grid size-[30px] place-items-center rounded-[9px] bg-accent text-accent-fg shadow-[0_3px_10px_var(--accent-soft)]">
             <Sparkles className="size-[17px]" />
           </div>
-          <span className="text-[17px] font-extrabold tracking-tight">Thothai</span>
+          <span className="text-[17px] font-extrabold tracking-tight">ThothAI</span>
         </div>
 
         {/* new chat */}
@@ -90,14 +94,27 @@ export function Sidebar() {
             onClick={() => router.push("/settings")}
             className="flex w-full items-center gap-2.5 rounded-[11px] border border-border bg-glass px-2.5 py-2 transition-colors hover:bg-glass-hover"
           >
-            <div className="grid size-[30px] shrink-0 place-items-center rounded-[9px] bg-accent text-[12px] font-bold text-accent-fg">
-              BS
-            </div>
+            {user?.avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={user.avatar}
+                alt=""
+                className="size-[30px] shrink-0 rounded-[9px] object-cover"
+              />
+            ) : (
+              <div className="grid size-[30px] shrink-0 place-items-center rounded-[9px] bg-accent text-[12px] font-bold text-accent-fg">
+                {user ? initials(user.fullname || user.username) : "·"}
+              </div>
+            )}
             <div className="min-w-0 flex-1 text-left">
-              <div className="truncate text-[13px] font-bold">Budi Santoso</div>
-              <div className="text-[11px] text-faint">Free plan</div>
+              <div className="truncate text-[13px] font-bold">
+                {user?.fullname || user?.username || "Loading…"}
+              </div>
+              <div className="truncate text-[11px] text-faint">
+                {user ? `@${user.username}` : "Not signed in"}
+              </div>
             </div>
-            <ChevronRight className="size-[15px] text-faint" />
+            <ChevronRight className="size-[15px] shrink-0 text-faint" />
           </button>
         </div>
       </div>

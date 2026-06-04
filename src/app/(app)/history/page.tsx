@@ -75,7 +75,7 @@ export default function SearchHistoryPage() {
     <PageWrap max={920}>
       <PageHeader
         title="Search history"
-        description="Every search Thothai ran for you and the jobs it retrieved. Most search happens in chat."
+        description="Every search ThothAI ran for you and the jobs it retrieved. Most search happens in chat."
       />
       {isLoading ? (
         <LoadingState label="Loading history…" />
@@ -85,7 +85,7 @@ export default function SearchHistoryPage() {
         <EmptyState
           icon={Clock}
           title="No searches yet"
-          description="Ask Thothai to find jobs in chat — your searches will show up here."
+          description="Ask ThothAI to find jobs in chat — your searches will show up here."
         />
       ) : (
         <div className="flex flex-col gap-2.5">
