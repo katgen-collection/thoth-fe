@@ -32,6 +32,10 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 // Access-token TTL is 30 min; refresh at 25 to stay ahead of expiry.
 const REFRESH_INTERVAL_MS = 25 * 60 * 1000;
+// If a proactive refresh fails (transient network / a tab waking up), retry soon
+// instead of logging the user out — a real logout only happens when an actual
+// API call 401s and can't be recovered (see lib/api/client.ts).
+const REFRESH_RETRY_MS = 60 * 1000;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -39,18 +43,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
 
-  const scheduleRefresh = useCallback(() => {
+  const scheduleRefresh = useCallback((delay = REFRESH_INTERVAL_MS) => {
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(async () => {
       const ok = await attemptRefresh();
-      if (ok) {
-        scheduleRefresh();
-      } else {
-        setUser(null);
-        router.replace("/login");
-      }
-    }, REFRESH_INTERVAL_MS);
-  }, [router]);
+      // Keep the token warm. On failure DON'T force a logout — that was the
+      // "idle, come back, suddenly logged out" bug. Just retry sooner; if the
+      // session is genuinely dead, the next real API call resolves it.
+      scheduleRefresh(ok ? REFRESH_INTERVAL_MS : REFRESH_RETRY_MS);
+    }, delay);
+  }, []);
 
   const updateUser = useCallback((u: User) => setUser(u), []);
 
