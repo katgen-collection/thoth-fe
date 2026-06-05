@@ -83,6 +83,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [scheduleRefresh]);
 
+  // Background tabs throttle the scheduled refresh, so the 30-min access token
+  // can lapse while the tab is hidden. Refresh the moment the tab is shown again
+  // (deduped in attemptRefresh) so the next action never hits a stale token.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      void attemptRefresh().then((ok) => {
+        if (ok) scheduleRefresh();
+      });
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+  }, [scheduleRefresh]);
+
   return (
     <AuthContext.Provider value={{ user, isLoading, updateUser, logout }}>
       {children}
