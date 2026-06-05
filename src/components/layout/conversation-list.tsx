@@ -28,9 +28,11 @@ const GROUP_ORDER = ["Today", "Yesterday", "Previous"];
 export function ConversationList() {
   const { data, isLoading, isError } = useConversations();
   const del = useDeleteConversation();
-  const params = useParams<{ conversationId?: string }>();
+  // The chat route is an optional catch-all (`/chat/[[...slug]]`), so the active
+  // conversation id is the first slug segment.
+  const params = useParams<{ slug?: string[] }>();
   const router = useRouter();
-  const activeId = params?.conversationId;
+  const activeId = params?.slug?.[0];
 
   if (isLoading) {
     return (

@@ -10,7 +10,6 @@ import {
   useCreateConversation,
   conversationKeys,
 } from "@/hooks/use-conversations";
-import { chatApi } from "@/lib/api/chat";
 import { useChatStore } from "@/stores/chat-store";
 import { messagesFromServer } from "@/lib/chat/render";
 import { LoadingState } from "@/components/ui/states";
@@ -35,23 +34,27 @@ export function ChatThread({ conversationId }: { conversationId: string | null }
   const createConv = useCreateConversation();
   const consumePendingPrompt = useChatStore((s) => s.consumePendingPrompt);
 
-  const newIdRef = useRef<string | null>(null);
+  // Id of a conversation we created during the current new-chat turn, before its
+  // URL has been swapped in. Used to stop the seed effect from wiping the live
+  // thread while `conversationId` (the prop) is still null.
+  const pendingNewId = useRef<string | null>(null);
+  // Conversation whose thread is currently displayed (server-seeded or live).
   const seededFor = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const onConversationNeeded = useCallback(async () => {
     const created = await createConv.mutateAsync(undefined);
-    newIdRef.current = created.id;
+    pendingNewId.current = created.id;
     return created.id;
   }, [createConv]);
 
   // The moment a brand-new conversation exists, surface it in the sidebar right
-  // away (it streams into the current view in place). We defer the URL swap to
-  // its permanent path until the stream finishes — navigating mid-stream would
-  // remount this component and abort the in-flight SSE.
+  // away. The turn keeps streaming into the current view in place; we swap to
+  // its permanent URL only once the stream finishes (see handleSend), so the
+  // single mounted ChatThread is never torn down mid-flight.
   const onConversationCreated = useCallback(
     (id: string) => {
-      newIdRef.current = id;
+      pendingNewId.current = id;
       qc.invalidateQueries({ queryKey: conversationKeys.all });
     },
     [qc],
@@ -64,20 +67,42 @@ export function ChatThread({ conversationId }: { conversationId: string | null }
     onError: (m) => toast.error(m),
   });
 
-  // Seed from the server once per conversation (not while streaming, so a live
-  // turn is never clobbered when `streaming` flips back to false).
+  // Once the URL has caught up to the conversation we just created, the pending
+  // marker has done its job — clear it so a later "New chat" (prop → null) can
+  // reset the thread instead of being treated as the mid-turn window.
   useEffect(() => {
+    if (conversationId && pendingNewId.current === conversationId) {
+      pendingNewId.current = null;
+    }
+  }, [conversationId]);
+
+  // Keep the displayed thread in sync with the route, without ever clobbering a
+  // live turn. Because `/chat` and `/chat/:id` are the same mounted component,
+  // this also handles switching between conversations and "New chat" resets.
+  useEffect(() => {
+    if (streaming) return; // never replace a thread that is actively streaming
+
+    // New-chat landing, or "New chat" clicked from an open conversation.
     if (!conversationId) {
-      // A new conversation may have been created mid-session (URL swapped via
-      // history.replaceState while the prop stays null) — don't wipe its thread.
-      if (newIdRef.current) return;
-      seededFor.current = null;
-      setMessages([]);
+      if (pendingNewId.current) return; // mid new-chat turn: keep the live thread
+      if (seededFor.current !== null) {
+        seededFor.current = null;
+        setMessages([]);
+      }
       return;
     }
-    if (conv.data && seededFor.current !== conversationId && !streaming) {
+
+    // Already showing this conversation (including the one we just streamed and
+    // swapped the URL for) — leave the live/seeded thread untouched.
+    if (seededFor.current === conversationId) return;
+
+    if (conv.data) {
       setMessages(messagesFromServer(conv.data));
       seededFor.current = conversationId;
+    } else {
+      // Switched to a conversation whose history hasn't loaded yet — drop the
+      // previous thread so we don't show the wrong conversation.
+      setMessages([]);
     }
   }, [conversationId, conv.data, streaming, setMessages]);
 
@@ -89,34 +114,31 @@ export function ChatThread({ conversationId }: { conversationId: string | null }
 
   const handleSend = useCallback(
     async (text: string) => {
+      const wasNew = !conversationId;
       await send(text);
 
-      // Reconcile with the persisted conversation so tool rows render as the
-      // exact same rich cards (and the title settles). Live SSE already showed
-      // them, so this is a silent correctness pass — no manual reload needed.
-      const id = conversationId ?? newIdRef.current;
+      const id = conversationId ?? pendingNewId.current;
       if (!id) return;
-      try {
-        const fresh = await qc.fetchQuery({
-          queryKey: conversationKeys.detail(id),
-          queryFn: () => chatApi.getConversation(id),
-        });
-        if (fresh) setMessages(messagesFromServer(fresh));
-        seededFor.current = id;
-      } catch {
-        /* keep the live-streamed view if the reconcile fetch fails */
-      }
-      qc.invalidateQueries({ queryKey: conversationKeys.all });
 
-      // New conversation: now that streaming is done, move to its permanent URL.
-      // The detail query is already cached above, so the remount re-seeds
-      // instantly with no flicker — and the route tree stays in sync with the
-      // URL (so "New chat" and refreshes behave correctly).
-      if (!conversationId && newIdRef.current) {
-        router.replace(`/chat/${newIdRef.current}`);
+      // The live stream already produced the full thread (text + rich tool
+      // cards). Mark it as the displayed conversation so the URL swap below does
+      // NOT trigger a reseed that could wipe it if the server read lags.
+      seededFor.current = id;
+
+      // Refresh the sidebar (title now set) and prime the detail cache for any
+      // future reload — without applying it over the live thread.
+      qc.invalidateQueries({ queryKey: conversationKeys.all });
+      qc.invalidateQueries({ queryKey: conversationKeys.detail(id) });
+
+      // New conversation: move to its permanent URL. Same route segment, so the
+      // component stays mounted and the live thread remains on screen — no
+      // remount, no flicker, no reload. The router stays in sync so "New chat"
+      // and conversation switching keep working.
+      if (wasNew) {
+        router.replace(`/chat/${id}`, { scroll: false });
       }
     },
-    [conversationId, send, qc, router, setMessages],
+    [conversationId, send, qc, router],
   );
 
   // Consume a prompt handed over from another surface (JobCard "Match CV", etc.)

@@ -77,6 +77,12 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
   const stillStreaming = (message.blocks ?? []).some(
     (b) => b.kind === "text" && b.streaming,
   );
+  // A just-started assistant turn (the empty streaming placeholder) has nothing
+  // to render yet — show a "Thinking…" pulse so it never looks unresponsive.
+  const hasVisibleContent = (message.blocks ?? []).some(
+    (b) => (b.kind === "text" && b.content.trim()) || b.kind === "tool",
+  );
+  const thinking = !isUser && stillStreaming && !hasVisibleContent;
 
   return (
     <div
@@ -98,9 +104,27 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
           </div>
         ) : (
           <div className="flex flex-col gap-0.5">
+            {thinking && (
+              <div className="flex items-center gap-2 py-1 text-[13.5px] text-muted">
+                <span className="flex gap-1">
+                  <span className="pulse-dot size-1.5 rounded-full bg-faint" />
+                  <span
+                    className="pulse-dot size-1.5 rounded-full bg-faint"
+                    style={{ animationDelay: "0.2s" }}
+                  />
+                  <span
+                    className="pulse-dot size-1.5 rounded-full bg-faint"
+                    style={{ animationDelay: "0.4s" }}
+                  />
+                </span>
+                Thinking…
+              </div>
+            )}
             {message.blocks?.map((block, i) => {
               if (block.kind === "text") {
-                if (!block.content && !block.streaming) return null;
+                // Empty text block carries no content yet — the "Thinking…"
+                // pulse (or a later token) stands in for it.
+                if (!block.content) return null;
                 return (
                   <div key={i} className="text-[14.5px]">
                     <Markdown>{block.content}</Markdown>
