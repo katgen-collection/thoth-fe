@@ -30,7 +30,7 @@ export default function CvDetailPage({
   const router = useRouter();
   const { data: cv, isLoading, isError, refetch } = useCv(cvId);
   const setDefault = useSetDefaultCv();
-  const setPendingPrompt = useChatStore((s) => s.setPendingPrompt);
+  const setPendingDraft = useChatStore((s) => s.setPendingDraft);
 
   if (isLoading) return <PageWrap><LoadingState label="Loading CV…" /></PageWrap>;
   if (isError || !cv) {
@@ -41,8 +41,10 @@ export default function CvDetailPage({
     );
   }
 
-  const askInChat = (prompt: string) => {
-    setPendingPrompt(prompt);
+  // These actions need the user to paste a job/role, so seed the composer as a
+  // draft (focused, not sent) rather than firing a half-written message.
+  const askInChat = (draft: string) => {
+    setPendingDraft(draft);
     router.push("/chat");
   };
 

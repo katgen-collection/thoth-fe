@@ -26,9 +26,9 @@ export const CHAT_SUGGESTIONS = [
   },
   {
     icon: "Target",
-    title: "Match my CV to a job",
-    sub: "Score fit against a posting",
-    prompt: "Match my CV against this job posting:",
+    title: "Find jobs that fit my CV",
+    sub: "Match roles to your profile",
+    prompt: "Analyze my CV, then find current job openings that fit my skills and experience.",
   },
   {
     icon: "FileText",

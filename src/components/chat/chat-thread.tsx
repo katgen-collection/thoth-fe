@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -33,6 +33,17 @@ export function ChatThread({ conversationId }: { conversationId: string | null }
   const conv = useConversation(conversationId);
   const createConv = useCreateConversation();
   const consumePendingPrompt = useChatStore((s) => s.consumePendingPrompt);
+  const consumePendingDraft = useChatStore((s) => s.consumePendingDraft);
+
+  // A prompt the user still has to finish (e.g. paste a job posting). Pre-fills
+  // the composer instead of auto-sending. Consumed once on mount; the key bump
+  // re-seeds the (otherwise mount-only) composer value.
+  const [draft, setDraft] = useState("");
+  const [composerKey, setComposerKey] = useState(0);
+  const seedDraft = useCallback((text: string) => {
+    setDraft(text);
+    setComposerKey((k) => k + 1);
+  }, []);
 
   // Id of a conversation we created during the current new-chat turn, before its
   // URL has been swapped in. Used to stop the seed effect from wiping the live
@@ -141,10 +152,20 @@ export function ChatThread({ conversationId }: { conversationId: string | null }
     [conversationId, send, qc, router],
   );
 
-  // Consume a prompt handed over from another surface (JobCard "Match CV", etc.)
+  // Consume anything handed over from another surface (a JobCard "Match CV", a
+  // CV-detail action, a suggestion). A complete prompt auto-sends; a draft just
+  // pre-fills the composer so the user can finish it (e.g. paste a posting).
   useEffect(() => {
     const pending = consumePendingPrompt();
-    if (pending) void handleSend(pending);
+    if (pending) {
+      void handleSend(pending);
+      return;
+    }
+    const d = consumePendingDraft();
+    if (d) {
+      setDraft(d);
+      setComposerKey((k) => k + 1);
+    }
     // run once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -159,7 +180,7 @@ export function ChatThread({ conversationId }: { conversationId: string | null }
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {showEmpty ? (
-        <ChatEmpty onPick={handleSend} />
+        <ChatEmpty onPick={handleSend} onDraft={seedDraft} />
       ) : (
         <div ref={scrollRef} className="scroll-area flex-1 px-7 pb-2 pt-3">
           {messages.map((m) => (
@@ -169,7 +190,14 @@ export function ChatThread({ conversationId }: { conversationId: string | null }
         </div>
       )}
       <div className="px-7 pb-5 pt-2">
-        <Composer onSend={handleSend} onStop={stop} streaming={streaming} />
+        <Composer
+          key={composerKey}
+          onSend={handleSend}
+          onStop={stop}
+          streaming={streaming}
+          initialValue={draft}
+          autoFocus={composerKey > 0}
+        />
       </div>
     </div>
   );

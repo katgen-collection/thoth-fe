@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Send, Square, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -8,11 +8,19 @@ interface ComposerProps {
   onSend: (text: string) => void;
   onStop: () => void;
   streaming: boolean;
-  /** Optional initial value (e.g. a suggestion the user picked). */
+  /** Optional initial value (e.g. a draft prompt the user still has to finish). */
   initialValue?: string;
+  /** Focus + grow the textarea on mount (used when seeded with a draft). */
+  autoFocus?: boolean;
 }
 
-export function Composer({ onSend, onStop, streaming, initialValue = "" }: ComposerProps) {
+export function Composer({
+  onSend,
+  onStop,
+  streaming,
+  initialValue = "",
+  autoFocus = false,
+}: ComposerProps) {
   const [value, setValue] = useState(initialValue);
   const ref = useRef<HTMLTextAreaElement>(null);
 
@@ -22,6 +30,18 @@ export function Composer({ onSend, onStop, streaming, initialValue = "" }: Compo
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
   };
+
+  // When seeded with a draft, focus the textarea (caret at end) and size it.
+  useEffect(() => {
+    if (!autoFocus) return;
+    const el = ref.current;
+    if (!el) return;
+    el.focus();
+    el.setSelectionRange(el.value.length, el.value.length);
+    grow();
+    // mount-only — the parent bumps `key` to re-seed a new draft
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const submit = () => {
     const text = value.trim();
