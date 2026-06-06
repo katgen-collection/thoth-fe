@@ -10,6 +10,8 @@ const TOOL_LABELS: Record<string, string> = {
   suggest_cv_edits: "Suggesting edits",
   save_job: "Saving job",
   get_saved_jobs: "Loading saved jobs",
+  update_job_status: "Updating tracker",
+  delete_saved_job: "Removing job",
   analyze_job_url: "Reading posting",
   prep_interview: "Preparing questions",
 };
