@@ -30,7 +30,9 @@ export const jobsApi = {
 
   updateStatus: (id: string, status: SavedJobStatus): Promise<SavedJob> =>
     apiFetch(`/jobs/saved/${id}/status`, {
-      method: "PATCH",
+      // PUT, not PATCH: the api-gateway CORS allow-list omits PATCH, so a PATCH
+      // preflight is blocked by the browser before the request is ever sent.
+      method: "PUT",
       json: { status },
       schema: savedJobSchema,
     }),
