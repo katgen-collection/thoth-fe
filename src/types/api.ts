@@ -179,7 +179,9 @@ export const savedJobSchema = z.object({
   location: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
   apply_link: z.string().optional().nullable(),
-  source: z.string().optional().nullable(),
+  // Backend stores `source` as JSONB — an origin object (from save_job) or null.
+  // It's metadata the UI never renders, so accept any shape rather than reject the row.
+  source: z.unknown().optional().nullable(),
   status: savedJobStatusSchema,
   notes: z.string().optional().nullable(),
   applied_at: z.string().optional().nullable(),
