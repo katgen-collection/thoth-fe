@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { sendMessageRequest } from "@/lib/api/chat";
+import { sendMessageRequest, type MessageReference } from "@/lib/api/chat";
 import { readChatSse } from "@/lib/sse/parse";
 import { parseToolResult } from "@/lib/chat/render";
 import type { ChatSseEvent } from "@/types/sse";
@@ -135,7 +135,7 @@ export function useChatStream({
   );
 
   const send = useCallback(
-    async (content: string) => {
+    async (content: string, references: MessageReference[] = []) => {
       const text = content.trim();
       if (!text || streaming) return;
 
@@ -172,7 +172,7 @@ export function useChatStream({
       abortRef.current = controller;
 
       try {
-        const { url, init } = sendMessageRequest(convId, text);
+        const { url, init } = sendMessageRequest(convId, text, references);
         const response = await fetch(url, { ...init, signal: controller.signal });
         if (!response.ok) {
           throw new Error(`Stream failed (${response.status})`);

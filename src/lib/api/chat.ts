@@ -27,12 +27,22 @@ export const chatApi = {
     apiFetch(`/chat/conversations/${id}`, { method: "DELETE" }),
 };
 
+/** A workspace item the user @-mentioned in a message (resolved server-side). */
+export interface MessageReference {
+  type: "cv" | "job";
+  id: string;
+}
+
 /**
  * URL + init for the streaming message POST. The caller opens the stream with
  * `fetch` and reads the body via `readChatSse` (see `lib/sse/parse.ts`); this is
  * not a JSON call, so it doesn't go through `apiFetch`.
  */
-export function sendMessageRequest(conversationId: string, content: string) {
+export function sendMessageRequest(
+  conversationId: string,
+  content: string,
+  references: MessageReference[] = [],
+) {
   return {
     url: apiUrl(`/chat/conversations/${conversationId}/messages`),
     init: {
@@ -42,7 +52,9 @@ export function sendMessageRequest(conversationId: string, content: string) {
         "Content-Type": "application/json",
         Accept: "text/event-stream",
       },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify(
+        references.length ? { content, references } : { content },
+      ),
     } satisfies RequestInit,
   };
 }

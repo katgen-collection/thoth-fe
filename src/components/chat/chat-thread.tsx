@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useChatStream } from "@/hooks/use-chat-stream";
+import type { MessageReference } from "@/lib/api/chat";
 import {
   useConversation,
   useCreateConversation,
@@ -124,9 +125,9 @@ export function ChatThread({ conversationId }: { conversationId: string | null }
   }, [messages]);
 
   const handleSend = useCallback(
-    async (text: string) => {
+    async (text: string, references: MessageReference[] = []) => {
       const wasNew = !conversationId;
-      await send(text);
+      await send(text, references);
 
       const id = conversationId ?? pendingNewId.current;
       if (!id) return;
